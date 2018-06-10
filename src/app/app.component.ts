@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ElementRef } from '@angular/core';
 import {GridOptions} from 'ag-grid/main';
 declare var $: any;
 
@@ -9,33 +9,48 @@ declare var $: any;
 })
 export class AppComponent {
   private gridOptions: GridOptions;
-  public rowData: any[];
-  public columnDefs: any[];
-  public defaultColDef: any;
-  public columnTypes: any;
-  public components: any;
+  private rowData: any[];
+  private columnDefs: any[];
+  private defaultColDef: any;
+  private columnTypes: any;
+  private components: any;
+  private getNodeChildDetails;
 
-  constructor(){
+  constructor(private el: ElementRef){
     this.gridOptions = <GridOptions>{
       onGridReady: () => {
         this.gridOptions.api.sizeColumnsToFit();
+        
       },
-      onCellValueChanged: () => {
+      onCellValueChanged: (cellObj) => {
+        console.log(cellObj);
         console.log(`Changed`);
       }
+      
     }
     this.columnDefs = [
-        {headerName: 'Make', field: 'make', rowDrag: true},
-        {headerName: 'Model', field: 'model'},
+        {headerName: 'Make', field: 'make', rowDrag: true, width: 60, cellRenderer: "agGroupCellRenderer"},
+        {headerName: 'Model', field: 'model', suppressFilter: true},
         {headerName: 'Price', field: 'price', type: 'numericColumn'},
         {headerName: 'Date', field: 'date', type: 'dateColumn', cellEditor: 'datePicker'},
-        {headerName: 'Favorite', field: 'fav', cellRenderer: 'makeCheckBox', cellEditor: 'checkBox'}  
+        {headerName: 'Favorite', field: 'fav', editable: false, cellRenderer: 'makeCheckBox'},  
+        {headerName: 'Misc', field: 'misc', editable: false, cellRenderer: 'makeRadioBox'}
     ];
 
     this.rowData = [
-      {make: "Toyota", model: "Celica", price: 35000, date:'12-08-1995', fav: 'true'},
-      {make: "Ford", model: "Mondeo", price: 32000, date:'12-08-1995', fav: 'false'},
-      {make: "Porsche", model: "Boxter", price: 72000, date:'12-08-1995', fav: 'false'}
+      {make: "Toyota", model: "Celica", price: 35000, date:'12/08/1995', fav: true, misc: true},
+      {make: "Ford", model: "Mondeo", price: 32000, date:'12/08/1995', fav: false, misc: false},
+      {make: "Porsche", model: "Boxter", price: 72000, date:'12/08/1995', fav: false, misc: true},
+      {make: "Honda", model: "Boxter", price: 72000, date:'12/08/1995', fav: false, misc: true,
+      participants: [{
+        make: "Porsche", model: "Boxter", price: 72000, date:'12/08/1995', fav: false, misc: true,
+        participants: [{
+          make: "Porsche", model: "Boxter", price: 72000, date:'12/08/1995', fav: false, misc: true,
+        }]},
+      {
+        make: "Porsche", model: "Boxter", price: 72000, date:'12/08/1995', fav: false, misc: true
+      }
+      ]}
     ];
 
     this.defaultColDef = {
@@ -45,7 +60,7 @@ export class AppComponent {
 
     this.columnTypes = {
       numberColumn: {
-        width: 50,
+        width: 100,
         filter: 'agNumberColumnFilter'
       },
       dateColumn:{
@@ -54,17 +69,55 @@ export class AppComponent {
     }
     this.components = { datePicker: getDatePicker(),
                         makeCheckBox: makeCheckBox(),
-                        checkBox: checkBox()};
+                        makeRadioBox: makeRadioBox(),
+                      };
+    this.getNodeChildDetails = function getNodeChildDetails(rowItem) {
+      console.log(rowItem);
+      if (rowItem.participants == null) {
+       return null;
+      } else {
+        return {
+          group: true,
+          expanded: rowItem.make == 'Honda',
+          children: rowItem.participants,
+          key: rowItem.make
+        };
+      }
+    };
   }
+
   
 }
 
+
+//Custom Rendering Functions
 function makeCheckBox(){
-  return (param) => `<input type='checkbox' ${param.value=='true' ? 'checked': ''}/>`;
+  function checkBox(param){
+    let chkbx = document.createElement('input');
+    chkbx.type = 'checkbox';
+    chkbx.checked = param.value;
+
+    chkbx.addEventListener('change', function(){
+      console.log('changed checkbox');
+    })
+    return chkbx;
+  }
+  return checkBox;
 }
 
-function checkBox(){
-  return () => `<input type='checkbox'/>`;
+function makeRadioBox(){
+  function radioBox(param){
+    console.log(param); //to store indexes 
+    let radio = document.createElement('input');
+    radio.type = 'radio';
+    radio.checked = param.value;
+
+    radio.addEventListener('change', function(){
+      console.log('changed radio');
+    })
+    return radio;
+  }
+  return radioBox;
 }
 
 function getDatePicker() {

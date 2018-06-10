@@ -1,13 +1,18 @@
-<ag-grid-angular #agGrid style="width: 500px; height: 150px;" class="ag-theme-balham"
+<div class="ag-container">
+<ag-grid-angular #agGrid style="width: 100%; height: 200px;" class="ag-theme-balham"
                  [gridOptions]="gridOptions"
                  [columnDefs]="columnDefs"
                  [rowData]="rowData"
                  [singleClickEdit]="true"
+                 [enableCellChangeFlash]="true"
+                 [stopEditingWhenGridLosesFocus]="true"
                  [defaultColDef]="defaultColDef"
                  [columnTypes]="columnTypes"
                  [enableColResize]="true"
                  [rowDragManaged]="true"
                  [components]="components"
+                 [getNodeChildDetails]="getNodeChildDetails"
                  [enableFilter]="true">
 </ag-grid-angular>
+</div>
 
